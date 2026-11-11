@@ -31,6 +31,8 @@ APK output: app/build/outputs/apk/debug/app-debug.apk.
 - [x] Room clone records and StateFlow view model
 - [x] Launchable installed-app picker, search and system-app toggle
 - [x] Replaceable engine interface and BlackBox adapter using upstream APIs
+- [x] Build an .apks bundle from the installed base APK and split APK files before virtual installation
+- [x] Enable the engine daemon service for virtual app lifecycle support
 - [x] Engine initialization in Application.attachBaseContext
 - [x] Clone, launch, rename, clear data, force stop and delete wiring
 - [x] Initial risk-app list
@@ -59,7 +61,7 @@ No physical-device test results are claimed for HAM yet.
 The engine upstream documents Android 16 hardening and .apks import support, but integrated HAM behavior must be verified independently. Hardware-backed Play Integrity, banking apps, anti-cheat games, FCM relay, some direct camera HAL paths and OEM background restrictions may fail.
 
 ## Permissions
-HAM declares package visibility, notifications, camera and microphone permissions. The upstream engine manifest contains additional declarations; the merged manifest must be audited after integration and on every engine update. Runtime permission forwarding is not complete.
+HAM retains package visibility, network, wake-lock, foreground-service, notification, camera, microphone, audio and legacy storage permissions. The manifest merger removes 237 unrelated upstream permission declarations, including vendor-specific and privileged permissions. Runtime permission forwarding is not complete; individual cloned apps may therefore still lack access to camera, microphone, media or notifications.
 
 ## Licensing
 HAM application code is MIT (see LICENSE). The separately licensed BlackBox engine is Apache-2.0. Retain upstream notices and comply with its third-party dependency licenses.
