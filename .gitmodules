@@ -1,0 +1,3 @@
+[submodule "engine/blackbox"]
+	path = engine/blackbox
+	url = https://github.com/Black00Z/Blacks-BlackBox.git
