@@ -1,5 +1,6 @@
 package com.keal.ham.engine
 
+import android.content.Intent
 import com.keal.ham.domain.InstalledApp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -48,8 +49,19 @@ class BlackBoxEngine : VirtualizationEngine {
     override suspend fun launch(packageName: String, userId: Int) =
         withContext(Dispatchers.IO) {
             runCatching {
-                check(core.launchApk(packageName, userId)) {
-                    "The engine did not provide a launch activity."
+                val launched = runCatching { core.launchApk(packageName, userId) }
+                    .getOrDefault(false)
+
+                if (!launched) {
+                    // The virtual package resolver can miss launcher filters for split APK installs.
+                    // Resolve the explicit launcher component from the host's installed copy, then
+                    // dispatch that component through BlackBox for the requested virtual user.
+                    val context = BlackBoxCore.getContext()
+                    val intent = context.packageManager.getLaunchIntentForPackage(packageName)
+                        ?: error("No launcher activity is declared for $packageName.")
+                    intent.setPackage(packageName)
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    core.startActivity(intent, userId)
                 }
             }
         }
