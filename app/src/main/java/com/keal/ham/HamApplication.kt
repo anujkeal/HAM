@@ -11,7 +11,7 @@ class HamApplication : Application() {
    BlackBoxCore.get().closeCodeInit()
    BlackBoxCore.get().doAttachBaseContext(base, object : ClientConfiguration() {
     override fun getHostPackageName(): String = base.packageName
-    override fun isEnableDaemonService(): Boolean = false
+    override fun isEnableDaemonService(): Boolean = true
     override fun isEnableLauncherActivity(): Boolean = true
     override fun isUseVpnNetwork(): Boolean = false
    })
