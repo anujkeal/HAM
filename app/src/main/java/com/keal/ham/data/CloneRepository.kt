@@ -17,11 +17,11 @@ class CloneRepository(context: Context, private val engine: VirtualizationEngine
   val pm = app.packageManager
   pm.getInstalledApplications(PackageManager.GET_META_DATA).asSequence()
    .filter { it.packageName != app.packageName && pm.getLaunchIntentForPackage(it.packageName) != null }
-   .filter { showSystem || it.flags and ApplicationInfo.FLAG_SYSTEM == 0 }
+   .filter { showSystem || (it.flags and ApplicationInfo.FLAG_SYSTEM) == 0 }
    .mapNotNull { info -> runCatching {
     val pi = pm.getPackageInfo(info.packageName, 0)
     val size = (listOf(info.sourceDir) + (info.splitSourceDirs?.toList() ?: emptyList())).filterNotNull().sumOf { File(it).length() }
-    InstalledApp(info.packageName, pm.getApplicationLabel(info).toString(), pi.versionName ?: "Unknown", size, info.flags and ApplicationInfo.FLAG_SYSTEM != 0, pm.getApplicationIcon(info))
+    InstalledApp(info.packageName, pm.getApplicationLabel(info).toString(), pi.versionName ?: "Unknown", size, (info.flags and ApplicationInfo.FLAG_SYSTEM) != 0, pm.getApplicationIcon(info))
    }.getOrNull() }.sortedBy { it.label.lowercase() }.toList()
  }
  suspend fun create(appInfo: InstalledApp, name: String): Result<Unit> {
