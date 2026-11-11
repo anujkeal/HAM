@@ -46,8 +46,14 @@ import com.keal.ham.domain.InstalledApp
 }
 @OptIn(ExperimentalFoundationApi::class)
 @Composable private fun Picker(s:HamState,vm:HamViewModel,m:Modifier=Modifier){
- val list=remember(s.apps,s.query){s.apps.filter{it.label.contains(s.query,true)||it.packageName.contains(s.query,true)}}
- Column(m.fillMaxSize().padding(horizontal=18.dp)){Spacer(Modifier.height(10.dp));Text("Choose an app",style=MaterialTheme.typography.headlineSmall,fontWeight=FontWeight.Bold);OutlinedTextField(s.query,vm::query,Modifier.fillMaxWidth(),label={Text("Search apps")},singleLine=true);Row(verticalAlignment=Alignment.CenterVertically){Text("Show system apps",Modifier.weight(1f));Switch(s.system,vm::system)};if(s.busy)LinearProgressIndicator(Modifier.fillMaxWidth());LazyColumn{items(list.size){i->val a=list[i];Row(Modifier.fillMaxWidth().combinedClickable(onClick={vm.select(a)}),verticalAlignment=Alignment.CenterVertically){androidx.compose.foundation.Image(a.icon.toBitmap(96,96).asImageBitmap(),null,Modifier.size(48.dp));Column(Modifier.padding(12.dp)){Text(a.label,fontWeight=FontWeight.SemiBold);Text(a.packageName,style=MaterialTheme.typography.labelSmall,color=MaterialTheme.colorScheme.onSurfaceVariant)}};HorizontalDivider()}}}
+ val list=remember(s.apps,s.query,s.clones,s.recentSort){
+  val filtered=s.apps.filter{it.label.contains(s.query,true)||it.packageName.contains(s.query,true)}
+  if(!s.recentSort) filtered.sortedBy{it.label.lowercase()} else {
+   val recent=s.clones.sortedByDescending{it.lastLaunchedAt?:it.createdAt}.map{it.packageName}.distinct()
+   filtered.sortedBy{val index=recent.indexOf(it.packageName);if(index<0) Int.MAX_VALUE else index}
+  }
+ }
+ Column(m.fillMaxSize().padding(horizontal=18.dp)){Spacer(Modifier.height(10.dp));Text("Choose an app",style=MaterialTheme.typography.headlineSmall,fontWeight=FontWeight.Bold);OutlinedTextField(s.query,vm::query,Modifier.fillMaxWidth(),label={Text("Search apps")},singleLine=true);Row(horizontalArrangement=Arrangement.spacedBy(8.dp)){TextButton(onClick={vm.recentSort(false)}){Text("A–Z",fontWeight=if(!s.recentSort)FontWeight.Bold else FontWeight.Normal)};TextButton(onClick={vm.recentSort(true)}){Text("Recently cloned",fontWeight=if(s.recentSort)FontWeight.Bold else FontWeight.Normal)}};Row(verticalAlignment=Alignment.CenterVertically){Text("Show system apps",Modifier.weight(1f));Switch(s.system,vm::system)};if(s.busy)LinearProgressIndicator(Modifier.fillMaxWidth());LazyColumn{items(list.size){i->val a=list[i];Row(Modifier.fillMaxWidth().combinedClickable(onClick={vm.select(a)}),verticalAlignment=Alignment.CenterVertically){androidx.compose.foundation.Image(a.icon.toBitmap(96,96).asImageBitmap(),null,Modifier.size(48.dp));Column(Modifier.padding(12.dp)){Text(a.label,fontWeight=FontWeight.SemiBold);Text(a.packageName,style=MaterialTheme.typography.labelSmall,color=MaterialTheme.colorScheme.onSurfaceVariant)}};HorizontalDivider()}}}
 }
 @Composable private fun Confirm(s:HamState,name:String,onName:(String)->Unit,vm:HamViewModel,m:Modifier=Modifier){
  val a=s.selected?:return
