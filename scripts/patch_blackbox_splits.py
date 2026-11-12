@@ -86,7 +86,7 @@ print(f"Patched {webview_file}: preserve stock UA and real network state.")
 if "import android.webkit.CookieManager;" not in webview:
     webview = webview.replace(
         "import android.webkit.WebViewDatabase;",
-        "import android.webkit.WebViewDatabase;\\nimport android.webkit.CookieManager;"
+        "import android.webkit.WebViewDatabase;" + chr(10) + "import android.webkit.CookieManager;"
     )
 cookie_anchor = """                    WebSettings settings = webView.getSettings();
                     if (settings != null) {
