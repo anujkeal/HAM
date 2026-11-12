@@ -83,6 +83,7 @@ class BlackBoxEngine : VirtualizationEngine {
                     "HAM could not find a launcher activity for $packageName inside the clone."
                 }
                 Log.i(TAG, "Virtual launch requested: package=$packageName user=$userId")
+                Unit
             }.onFailure {
                 Log.e(TAG, "Virtual launch failed: package=$packageName user=$userId", it)
             }
