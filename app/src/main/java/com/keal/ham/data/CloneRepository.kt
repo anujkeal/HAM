@@ -42,9 +42,13 @@ class CloneRepository(context: Context, private val engine: VirtualizationEngine
             .toList()
     }
 
-    suspend fun create(appInfo: InstalledApp, name: String): Result<Unit> {
+    suspend fun create(
+        appInfo: InstalledApp,
+        name: String,
+        onProgress: (String) -> Unit = {}
+    ): Result<Unit> {
         val user = dao.maxUserId() + 1
-        val result = engine.clone(appInfo, user)
+        val result = engine.clone(appInfo, user, onProgress)
         if (result.isSuccess) dao.insert(
             CloneEntity(
                 packageName = appInfo.packageName,
