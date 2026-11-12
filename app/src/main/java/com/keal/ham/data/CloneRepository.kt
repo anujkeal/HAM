@@ -62,7 +62,9 @@ class CloneRepository(context: Context, private val engine: VirtualizationEngine
 
     suspend fun launch(c: CloneEntity): Result<Unit> {
         val result = engine.launch(c.packageName, c.virtualUserId)
-        dao.status(c.id, if (result.isSuccess) "Works" else "Crashed")
+        // BlackBox launchApk() confirms that an activity launch was dispatched;
+        // it cannot confirm that the guest process stayed alive after onCreate().
+        dao.status(c.id, if (result.isSuccess) "Launch requested" else "Launch failed")
         if (result.isSuccess) dao.launched(c.id, System.currentTimeMillis())
         return result
     }
