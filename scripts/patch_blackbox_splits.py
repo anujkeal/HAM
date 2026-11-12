@@ -45,3 +45,38 @@ if count != 1:
     sys.exit("Expected upstream split-selection method was not found exactly once; refusing to patch.")
 engine_file.write_text(patched, encoding="utf-8")
 print(f"Patched {engine_file}: all installed splits will be retained.")
+
+# Meta authentication and other embedded web flows can reject nonstandard
+# WebView user agents. Preserve stock UA and let WebView observe real network state.
+webview_file = Path("engine/blackbox/Bcore/src/main/java/top/niunaijun/blackbox/fake/service/WebViewProxy.java")
+if not webview_file.is_file():
+    sys.exit(f"BlackBox WebView proxy not found: {webview_file}")
+webview = webview_file.read_text(encoding="utf-8")
+
+ua_block = """                    String userAgent = settings.getUserAgentString();
+                    if (userAgent != null && !userAgent.contains("BlackBox")) {
+                        settings.setUserAgentString(userAgent + " BlackBox");
+                    }
+"""
+if ua_block in webview:
+    webview = webview.replace(ua_block, """                    // Preserve the stock Android System WebView user agent.
+                    // Meta login/security flows may reject modified user agents.
+""")
+elif 'settings.setUserAgentString(userAgent + " BlackBox")' in webview:
+    sys.exit("Unexpected WebView user-agent patch shape; refusing to modify.")
+
+network_block = """                    try {
+                        webView.setNetworkAvailable(true);
+                    } catch (Exception e) {
+                        
+                    }
+
+"""
+if network_block in webview:
+    webview = webview.replace(network_block, """                    // Let WebView observe the real Android network state.
+""")
+elif "webView.setNetworkAvailable(true)" in webview:
+    sys.exit("Unexpected WebView network-state patch shape; refusing to modify.")
+
+webview_file.write_text(webview, encoding="utf-8")
+print(f"Patched {webview_file}: preserve stock UA and real network state.")
