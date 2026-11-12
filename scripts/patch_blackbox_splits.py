@@ -80,3 +80,35 @@ elif "webView.setNetworkAvailable(true)" in webview:
 
 webview_file.write_text(webview, encoding="utf-8")
 print(f"Patched {webview_file}: preserve stock UA and real network state.")
+
+# Embedded Meta authentication uses cookies across its own WebView origins.
+# Explicitly enable the platform cookie manager for the isolated guest WebView.
+if "import android.webkit.CookieManager;" not in webview:
+    webview = webview.replace(
+        "import android.webkit.WebViewDatabase;",
+        "import android.webkit.WebViewDatabase;\\nimport android.webkit.CookieManager;"
+    )
+cookie_anchor = """                    WebSettings settings = webView.getSettings();
+                    if (settings != null) {
+"""
+cookie_patch = """                    WebSettings settings = webView.getSettings();
+                    if (settings != null) {
+                        CookieManager cookieManager = CookieManager.getInstance();
+                        cookieManager.setAcceptCookie(true);
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                            cookieManager.setAcceptThirdPartyCookies(webView, true);
+                        }
+"""
+if cookie_anchor in webview and "setAcceptThirdPartyCookies(webView, true)" not in webview:
+    webview = webview.replace(cookie_anchor, cookie_patch, 1)
+elif "setAcceptThirdPartyCookies(webView, true)" not in webview:
+    sys.exit("WebView settings insertion point not found; refusing cookie patch.")
+
+# Never write full authentication URLs (which contain temporary security tokens)
+# to Logcat. Log only the host.
+webview = webview.replace(
+    'Slog.d(TAG, "WebView: loadUrl called with: " + url);',
+    'Slog.d(TAG, "WebView: loadUrl host=" + (url == null ? "null" : android.net.Uri.parse(url).getHost()));'
+)
+webview_file.write_text(webview, encoding="utf-8")
+print(f"Patched {webview_file}: WebView cookies enabled and auth URL logging redacted.")
